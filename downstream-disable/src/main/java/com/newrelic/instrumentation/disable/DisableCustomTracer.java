@@ -1,4 +1,4 @@
-package com.newrelic.instrumentation.kronos;
+package com.newrelic.instrumentation.disable;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -18,7 +18,7 @@ import com.newrelic.api.agent.InboundHeaders;
 import com.newrelic.api.agent.OutboundHeaders;
 
 @SuppressWarnings("deprecation")
-public class KronosCustomTracer implements Tracer {
+public class DisableCustomTracer implements Tracer {
   private final TransactionActivity txa;
   
   private final Tracer parentTracer;
@@ -31,7 +31,7 @@ public class KronosCustomTracer implements Tracer {
   
   private final ClassMethodSignature classMethodSignature;
   
-  public KronosCustomTracer(TransactionActivity transactionActivity, ClassMethodSignature sig, String metricPrefix) {
+  public DisableCustomTracer(TransactionActivity transactionActivity, ClassMethodSignature sig, String metricPrefix) {
     this.txa = transactionActivity;
     this.parentTracer = this.txa.getLastTracer();
     this.classMethodSignature = sig;

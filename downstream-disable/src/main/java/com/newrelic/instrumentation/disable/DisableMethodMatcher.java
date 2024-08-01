@@ -1,4 +1,4 @@
-package com.newrelic.instrumentation.kronos;
+package com.newrelic.instrumentation.disable;
 
 import com.newrelic.agent.deps.org.objectweb.asm.commons.Method;
 import com.newrelic.agent.instrumentation.methodmatchers.MethodMatcher;
@@ -6,18 +6,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class KronosMethodMatcher implements MethodMatcher {
-  private static KronosMethodMatcher INSTANCE = null;
+public class DisableMethodMatcher implements MethodMatcher {
+  private static DisableMethodMatcher INSTANCE = null;
   
   private List<String> matches;
   
-  public static KronosMethodMatcher getInstance() {
+  public static DisableMethodMatcher getInstance() {
     if (INSTANCE == null)
-      INSTANCE = new KronosMethodMatcher(); 
+      INSTANCE = new DisableMethodMatcher(); 
     return INSTANCE;
   }
   
-  private KronosMethodMatcher() {
+  private DisableMethodMatcher() {
     this.matches = new ArrayList<>();
   }
   

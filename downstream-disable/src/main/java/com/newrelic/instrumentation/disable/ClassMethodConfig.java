@@ -1,4 +1,4 @@
-package com.newrelic.instrumentation.kronos;
+package com.newrelic.instrumentation.disable;
 
 import com.newrelic.agent.tracers.ClassMethodSignature;
 

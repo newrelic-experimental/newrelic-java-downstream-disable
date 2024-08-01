@@ -1,4 +1,4 @@
-package com.newrelic.instrumentation.kronos;
+package com.newrelic.instrumentation.disable;
 
 import com.newrelic.agent.InstrumentationProxy;
 import com.newrelic.agent.deps.org.objectweb.asm.commons.Method;
@@ -15,12 +15,12 @@ import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.Map;
 
-public class KronosTransformer implements ContextClassTransformer {
+public class DisableTransformer implements ContextClassTransformer {
   private final InstrumentationContextManager contextManager;
   
   private final Map<String, ClassMatchVisitorFactory> matchers = new HashMap<>();
   
-  public KronosTransformer(InstrumentationContextManager mgr, InstrumentationProxy pInstrumentation) {
+  public DisableTransformer(InstrumentationContextManager mgr, InstrumentationProxy pInstrumentation) {
     this.contextManager = mgr;
   }
   
@@ -44,7 +44,7 @@ public class KronosTransformer implements ContextClassTransformer {
       for (ClassAndMethodMatcher matcher : match.getClassMatches().keySet()) {
         if (matcher.getMethodMatcher().matches(-1, method.getName(), method
             .getDescriptor(), match.getMethodAnnotations(method)))
-          context.putTraceAnnotation(method, TraceDetailsBuilder.newBuilder().setTracerFactoryName("KronosThreshold").setInstrumentationSourceName("KronosThreshold").build()); 
+          context.putTraceAnnotation(method, TraceDetailsBuilder.newBuilder().setTracerFactoryName("DisableThreshold").setInstrumentationSourceName("DisableThreshold").build()); 
       } 
     } 
     return null;

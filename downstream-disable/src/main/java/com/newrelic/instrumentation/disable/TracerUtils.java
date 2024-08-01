@@ -1,4 +1,4 @@
-package com.newrelic.instrumentation.kronos;
+package com.newrelic.instrumentation.disable;
 
 import com.newrelic.agent.Transaction;
 import com.newrelic.agent.TransactionActivity;
@@ -56,7 +56,7 @@ public class TracerUtils implements AgentConfigListener {
     if (txn == null)
       return null; 
     if (size > THRESHOLD) {
-      tracer = new KronosCustomTracer(txn.getTransactionActivity(), sig, "Kronos");
+      tracer = new DisableCustomTracer(txn.getTransactionActivity(), sig, "Disable");
     } else {
       tracer = null;
     } 
