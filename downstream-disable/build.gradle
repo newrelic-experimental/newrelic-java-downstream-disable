@@ -21,7 +21,7 @@ jar {
       'Implementation-Vendor': 'New Relic Labs',
       'Implementation-Vendor-Id': 'com.newrelic.labs',
       'Implementation-Version': 1.0,
-      'Premain-Class': 'com.newrelic.instrumentation.disable.DisableThresholdService'
+      'Agent-Class': 'com.newrelic.instrumentation.disable.DisablePreMain'
     )
   }
 }
