@@ -5,6 +5,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
+import com.newrelic.api.agent.Trace;
+
 public class BaseClass extends AbstractBaseClass {
 	@Override
 	public void makeExternalCall() {
@@ -15,6 +17,11 @@ public class BaseClass extends AbstractBaseClass {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		interMakeCall();
+	}
+
+	@Trace
+	public void interMakeCall() {
 		// Simulate a database or external call
 		System.out.println("Making external call in BaseClass");
 
@@ -34,6 +41,7 @@ public class BaseClass extends AbstractBaseClass {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
 	}
 
 	public static void main(String[] args) {

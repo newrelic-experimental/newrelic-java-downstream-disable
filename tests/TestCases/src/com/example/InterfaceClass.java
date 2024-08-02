@@ -5,6 +5,8 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
+import com.newrelic.api.agent.Trace;
+
 public class InterfaceClass implements ExternalCallInterface {
 	@Override
 
@@ -16,8 +18,13 @@ public class InterfaceClass implements ExternalCallInterface {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		interMakeCall();
+	}
+
+	@Trace
+	public void interMakeCall() {
 		// Simulate a database or external call
-		System.out.println("Making external call in InterfaceClass");
+		System.out.println("Making external call in BaseClass");
 
 		// Database connection details
 		String url = "jdbc:mysql://localhost:3306/studentdatabase";
@@ -35,6 +42,7 @@ public class InterfaceClass implements ExternalCallInterface {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
 	}
 
 	public static void main(String[] args) {

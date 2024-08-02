@@ -8,7 +8,7 @@ import java.sql.Statement;
 import com.newrelic.api.agent.Trace;
 
 public class ExactClass {
-	@Trace
+
 	public void makeExternalCall() {
 
 		try {
@@ -17,8 +17,13 @@ public class ExactClass {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		interMakeCall();
+	}
+
+	@Trace
+	public void interMakeCall() {
 		// Simulate a database or external call
-		System.out.println("Making external call in ExactClass");
+		System.out.println("Making external call in BaseClass");
 
 		// Database connection details
 		String url = "jdbc:mysql://localhost:3306/studentdatabase";
@@ -36,6 +41,7 @@ public class ExactClass {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
 	}
 
 	public static void main(String[] args) {
