@@ -19,6 +19,12 @@ public class DisableTracerFactory extends AbstractTracerFactory {
 			NewRelic.getAgent().getLogger().log(Level.FINE, "Transaction or ClassMethodSignature is null");
 			return null;
 		}
+		
+		String className = sig.getClassName();
+		if(TracerUtils.isRemovedClass(className)) {
+			
+			return null;
+		}
 
 		int tracerFlags = TracerFlags.GENERATE_SCOPED_METRIC | TracerFlags.TRANSACTION_TRACER_SEGMENT
 				| TracerFlags.LEAF;

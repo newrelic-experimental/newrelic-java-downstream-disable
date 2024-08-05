@@ -14,6 +14,7 @@ import com.newrelic.agent.TracerService;
 import com.newrelic.agent.core.CoreService;
 import com.newrelic.agent.deps.org.json.simple.parser.ParseException;
 import com.newrelic.agent.instrumentation.ClassTransformerService;
+import com.newrelic.agent.instrumentation.classmatchers.ClassAndMethodMatcher;
 import com.newrelic.agent.instrumentation.context.ClassMatchVisitorFactory;
 import com.newrelic.agent.instrumentation.context.InstrumentationContextManager;
 import com.newrelic.agent.service.ServiceFactory;
@@ -32,7 +33,6 @@ public class DisablePreMain {
 	}
 
 	public boolean setup() {
-		DisableClassAndMethodMatcher matcher = new DisableClassAndMethodMatcher();
 		TracerService tracerService = ServiceFactory.getTracerService();
 		ClassTransformerService classTransformerService = ServiceFactory.getClassTransformerService();
 		CoreService coreService = ServiceFactory.getCoreService();
@@ -50,13 +50,16 @@ public class DisablePreMain {
 			InstrumentationProxy proxy = coreService.getInstrumentation();
 			if (contextMgr != null && proxy != null) {
 				DisableTransformer transformer = new DisableTransformer(contextMgr, proxy);
-				ClassMatchVisitorFactory matchVisitor = transformer.addMatcher(matcher);
-				classMatchers.add(matchVisitor);
+				for(ClassAndMethodMatcher matcher : TracerUtils.getClassMethodMatchers()) {
+					ClassMatchVisitorFactory matchVisitor = transformer.addMatcher(matcher);
+					classMatchers.add(matchVisitor);
+				}
 				NewRelic.getAgent().getLogger().log(Level.INFO, "Disable transformer started");
 				Class<?>[] allLoadedClasses = ServiceFactory.getCoreService().getInstrumentation()
 						.getAllLoadedClasses();
 				ServiceFactory.getClassTransformerService().retransformMatchingClassesImmediately(allLoadedClasses,
 						classMatchers);
+				TracerUtils.setTransformer(transformer);
 				return true;
 			}
 		}

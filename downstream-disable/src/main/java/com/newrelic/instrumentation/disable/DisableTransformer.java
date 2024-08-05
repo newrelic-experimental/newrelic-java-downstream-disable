@@ -24,6 +24,10 @@ public class DisableTransformer implements ContextClassTransformer {
 	public DisableTransformer(InstrumentationContextManager mgr, InstrumentationProxy pInstrumentation) {
 		this.contextManager = mgr;
 	}
+	
+	protected void resetMatchers() {
+		matchers.clear();
+	}
 
 	protected ClassMatchVisitorFactory addMatcher(ClassAndMethodMatcher matcher) {
 		OptimizedClassMatcherBuilder builder = OptimizedClassMatcherBuilder.newBuilder();
@@ -48,13 +52,13 @@ public class DisableTransformer implements ContextClassTransformer {
 			for (ClassAndMethodMatcher matcher : match.getClassMatches().keySet()) {
 				if (matcher.getMethodMatcher().matches(-1, method.getName(), method.getDescriptor(),
 						match.getMethodAnnotations(method))) {
-					context.putTraceAnnotation(method,
-							TraceDetailsBuilder.newBuilder().setTracerFactoryName("DisablePreMain")
-									.setInstrumentationSourceName("DisablePreMain")
-									.setInstrumentationType(InstrumentationType.TracedWeaveInstrumentation).build());
+
+					context.putTraceAnnotation(method, TraceDetailsBuilder.newBuilder()
+							.setTracerFactoryName("DisablePreMain").setInstrumentationSourceName("DisablePreMain")
+							.setInstrumentationType(InstrumentationType.TracedWeaveInstrumentation).build());
 				}
 			}
-		}
+		} 
 		return null;
 	}
 }

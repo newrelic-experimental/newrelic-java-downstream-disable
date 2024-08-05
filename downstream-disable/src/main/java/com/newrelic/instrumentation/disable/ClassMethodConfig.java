@@ -7,8 +7,6 @@ public class ClassMethodConfig {
 
 	private String methodName;
 
-	private Integer collectionMarker;
-
 	private ClassMethodSignature sig;
 
 	private TraceType type = TraceType.EXACTCLASS;
@@ -27,14 +25,6 @@ public class ClassMethodConfig {
 
 	public void setMethodName(String methodName) {
 		this.methodName = methodName;
-	}
-
-	public Integer getCollectionMarker() {
-		return this.collectionMarker;
-	}
-
-	public void setCollectionMarker(int collectionMarker) {
-		this.collectionMarker = Integer.valueOf(collectionMarker);
 	}
 
 	public TraceType getType() {
@@ -56,6 +46,6 @@ public class ClassMethodConfig {
 	@Override
 	public String toString() {
 		return "ClassMethodConfig [className=" + this.className + ", methodName=" + this.methodName
-				+ ", collectionMarker=" + this.collectionMarker + ", sig=" + this.sig + ", type=" + this.type + "]";
+				+  ", sig=" + this.sig + ", type=" + this.type + "]";
 	}
 }
