@@ -5,6 +5,7 @@ import java.lang.instrument.Instrumentation;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -22,7 +23,6 @@ public class DisablePreMain {
 	public static final String TRACER_FACTORY_NAME = "DisablePreMain";
 
 	public DisablePreMain() {
-
 	}
 
 	protected void doStart() throws Exception {
@@ -32,7 +32,7 @@ public class DisablePreMain {
 	}
 
 	public boolean setup() {
-		DisableClassMethodMatcher matcher = new DisableClassMethodMatcher();
+		DisableClassAndMethodMatcher matcher = new DisableClassAndMethodMatcher();
 		TracerService tracerService = ServiceFactory.getTracerService();
 		ClassTransformerService classTransformerService = ServiceFactory.getClassTransformerService();
 		CoreService coreService = ServiceFactory.getCoreService();
@@ -85,7 +85,10 @@ public class DisablePreMain {
 		NewRelic.getAgent().getLogger().log(Level.INFO, "DisablePreMain premain method invoked");
 		DisablePreMain service = new DisablePreMain();
 		try {
-			service.doStart(); // do not call
+			service.doStart();
+			// Schedule DisableConfigListener to run every minute
+			ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+			scheduler.scheduleAtFixedRate(new DisableConfigListener(), 0, 1, TimeUnit.MINUTES);
 		} catch (Exception e) {
 			NewRelic.getAgent().getLogger().log(Level.SEVERE, e, "Failed to start DisablePreMain");
 		}

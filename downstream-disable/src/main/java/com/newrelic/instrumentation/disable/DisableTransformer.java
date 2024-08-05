@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.newrelic.agent.InstrumentationProxy;
 import com.newrelic.agent.deps.org.objectweb.asm.commons.Method;
+import com.newrelic.agent.instrumentation.InstrumentationType;
 import com.newrelic.agent.instrumentation.classmatchers.ClassAndMethodMatcher;
 import com.newrelic.agent.instrumentation.classmatchers.OptimizedClassMatcher;
 import com.newrelic.agent.instrumentation.classmatchers.OptimizedClassMatcherBuilder;
@@ -18,7 +19,6 @@ import com.newrelic.agent.instrumentation.tracing.TraceDetailsBuilder;
 
 public class DisableTransformer implements ContextClassTransformer {
 	private final InstrumentationContextManager contextManager;
-
 	private final Map<String, ClassMatchVisitorFactory> matchers = new HashMap<>();
 
 	public DisableTransformer(InstrumentationContextManager mgr, InstrumentationProxy pInstrumentation) {
@@ -47,10 +47,12 @@ public class DisableTransformer implements ContextClassTransformer {
 		for (Method method : match.getMethods()) {
 			for (ClassAndMethodMatcher matcher : match.getClassMatches().keySet()) {
 				if (matcher.getMethodMatcher().matches(-1, method.getName(), method.getDescriptor(),
-						match.getMethodAnnotations(method)))
+						match.getMethodAnnotations(method))) {
 					context.putTraceAnnotation(method,
 							TraceDetailsBuilder.newBuilder().setTracerFactoryName("DisablePreMain")
-									.setInstrumentationSourceName("DisablePreMain").build());
+									.setInstrumentationSourceName("DisablePreMain")
+									.setInstrumentationType(InstrumentationType.TracedWeaveInstrumentation).build());
+				}
 			}
 		}
 		return null;

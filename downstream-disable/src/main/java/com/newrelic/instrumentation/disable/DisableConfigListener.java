@@ -5,7 +5,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 
 import com.newrelic.agent.config.ConfigFileHelper;
@@ -17,6 +19,9 @@ import com.newrelic.agent.instrumentation.classmatchers.ChildClassMatcher;
 import com.newrelic.agent.instrumentation.classmatchers.ClassMatcher;
 import com.newrelic.agent.instrumentation.classmatchers.ExactClassMatcher;
 import com.newrelic.agent.instrumentation.classmatchers.InterfaceMatcher;
+import com.newrelic.agent.instrumentation.classmatchers.OptimizedClassMatcherBuilder;
+import com.newrelic.agent.instrumentation.context.ClassMatchVisitorFactory;
+import com.newrelic.agent.service.ServiceFactory;
 import com.newrelic.agent.tracers.ClassMethodSignature;
 import com.newrelic.api.agent.NewRelic;
 
@@ -28,6 +33,7 @@ public class DisableConfigListener implements Runnable {
 	private static final String INTERFACE = "interface";
 	private static File configFile = null;
 	private static long lastModified = System.currentTimeMillis();
+	private static Set<ClassMatchVisitorFactory> classMatchers = new HashSet<>();
 
 	static {
 		String configFileName = "downstream-disable.json"; // Updated file name
@@ -45,13 +51,15 @@ public class DisableConfigListener implements Runnable {
 
 	@Override
 	public void run() {
-		if (configFile != null && configFile.lastModified() > lastModified)
+		if (configFile != null && configFile.lastModified() > lastModified) {
 			try {
 				JSONObject json = new JSONObject();
 				JSONParser parser = new JSONParser();
 				FileReader reader = new FileReader(configFile);
 				json = (JSONObject) parser.parse(reader);
 				process(json);
+				lastModified = configFile.lastModified();
+				retransformMatchingClasses();
 			} catch (FileNotFoundException e) {
 				NewRelic.getAgent().getLogger().log(Level.FINE, e,
 						"Failed to find downstream-disable.json in the agent directory");
@@ -62,16 +70,22 @@ public class DisableConfigListener implements Runnable {
 				NewRelic.getAgent().getLogger().log(Level.FINE, e,
 						"Failed to parse the contents of downstream-disable.json in the agent directory");
 			}
+		}
 	}
 
 	protected static void process(JSONObject json) {
 		if (json != null) {
 			JSONArray jArray = (JSONArray) json.get("toDisable");
 			DisableMethodMatcher methodMatcher = DisableMethodMatcher.getInstance();
+
+			DisableClassMatcher disableClassMatcher = DisableClassMatcher.getInstance();
+			disableClassMatcher.clear(); // Clear existing class matchers
+			classMatchers.clear(); // Clear existing class match visitor factories
 			if (!methodMatcher.isEmpty())
 				methodMatcher.clear();
-			List<ClassMatcher> classMatchers = new ArrayList<>();
-			if (jArray != null && !jArray.isEmpty())
+
+			List<ClassMatcher> matchers = new ArrayList<>();
+			if (jArray != null && !jArray.isEmpty()) {
 				for (Object obj : jArray) {
 					if (obj instanceof JSONObject) {
 						JSONObject classJson = (JSONObject) obj;
@@ -103,13 +117,13 @@ public class DisableConfigListener implements Runnable {
 								break;
 							}
 							if (exactClassMatcher != null)
-								classMatchers.add(exactClassMatcher);
+								matchers.add(exactClassMatcher);
 							if (interfaceMatcher != null)
-								classMatchers.add(interfaceMatcher);
+								matchers.add(interfaceMatcher);
 							if (childClassMatcher != null)
-								classMatchers.add(childClassMatcher);
+								matchers.add(childClassMatcher);
 							JSONArray methodArray = (JSONArray) classJson.get("methods");
-							if (methodArray != null && !methodArray.isEmpty())
+							if (methodArray != null && !methodArray.isEmpty()) {
 								for (Object obj2 : methodArray) {
 									if (obj2 instanceof JSONObject) {
 										JSONObject methodObj = (JSONObject) obj2;
@@ -142,15 +156,32 @@ public class DisableConfigListener implements Runnable {
 										TracerUtils.addTracerConfig(config);
 									}
 								}
+							}
 						}
 					}
 				}
-			if (!classMatchers.isEmpty()) {
-				DisableClassMatcher matcher = DisableClassMatcher.getInstance();
-				if (!matcher.isEmpty())
-					matcher.clear();
-				matcher.addAllMatchers(classMatchers);
 			}
+			if (!matchers.isEmpty()) {
+				// DisableClassMatcher disableClassMatcher = DisableClassMatcher.getInstance();
+				disableClassMatcher.clear();
+				disableClassMatcher.addAllMatchers(matchers);
+
+				OptimizedClassMatcherBuilder builder = OptimizedClassMatcherBuilder.newBuilder();
+				builder.addClassMethodMatcher(new DisableClassAndMethodMatcher(disableClassMatcher, methodMatcher));
+				classMatchers.add(builder.build());
+			}
+		}
+	}
+
+	private void retransformMatchingClasses() {
+		try {
+			Class<?>[] allLoadedClasses = ServiceFactory.getCoreService().getInstrumentation().getAllLoadedClasses();
+			ServiceFactory.getClassTransformerService().retransformMatchingClassesImmediately(allLoadedClasses,
+					classMatchers);
+			NewRelic.getAgent().getLogger().log(Level.INFO,
+					"Re-transformed matching classes based on updated configuration");
+		} catch (Exception e) {
+			NewRelic.getAgent().getLogger().log(Level.SEVERE, e, "Failed to re-transform matching classes");
 		}
 	}
 }
