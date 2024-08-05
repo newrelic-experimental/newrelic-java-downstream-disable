@@ -12,10 +12,13 @@ public class Main {
             System.out.println("Iteration " + (i + 1));
 
             testExactClass(exactClass);
+    		PauseService.pauseRandomUnits();
             testInterfaceClass(interfaceClass);
+    		PauseService.pauseRandomUnits();
             testBaseClass(baseClass);
 
-            
+    		PauseService.pauseRandomSeconds();
+
         }
     }
     @Trace(dispatcher=true)

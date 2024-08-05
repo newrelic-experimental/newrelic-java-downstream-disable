@@ -11,12 +11,7 @@ public class BaseClass extends AbstractBaseClass {
 	@Override
 	public void makeExternalCall() {
 
-		try {
-			// Delay of 1 seconds
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		PauseService.pauseRandomUnits();
 		interMakeCall();
 	}
 
@@ -27,8 +22,8 @@ public class BaseClass extends AbstractBaseClass {
 
 		// Database connection details
 		String url = "jdbc:mysql://localhost:3306/studentdatabase";
-		String user = "root";
-		String password = "";
+		String user = "doug";
+		String password = "doug";
 
 		try (Connection connection = DriverManager.getConnection(url, user, password);
 				Statement statement = connection.createStatement();
