@@ -5,9 +5,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
@@ -21,15 +21,13 @@ import com.newrelic.agent.instrumentation.classmatchers.ClassAndMethodMatcher;
 import com.newrelic.agent.instrumentation.classmatchers.ClassMatcher;
 import com.newrelic.agent.instrumentation.classmatchers.ExactClassMatcher;
 import com.newrelic.agent.instrumentation.classmatchers.InterfaceMatcher;
-import com.newrelic.agent.instrumentation.classmatchers.OptimizedClassMatcherBuilder;
 import com.newrelic.agent.instrumentation.context.ClassMatchVisitorFactory;
-import com.newrelic.agent.instrumentation.methodmatchers.ExactMethodMatcher;
 import com.newrelic.agent.instrumentation.methodmatchers.MethodMatcher;
-import com.newrelic.agent.instrumentation.methodmatchers.NameMethodMatcher;
 import com.newrelic.agent.instrumentation.methodmatchers.OrMethodMatcher;
 import com.newrelic.agent.service.ServiceFactory;
 import com.newrelic.agent.tracers.ClassMethodSignature;
 import com.newrelic.api.agent.NewRelic;
+import com.newrelic.instrumentation.disable.TracerUtils.STATUS;
 
 public class DisableConfigListener implements Runnable {
 	private static final String CLASSNAME = "classname";
@@ -40,9 +38,10 @@ public class DisableConfigListener implements Runnable {
 	private static File configFile = null;
 	private static long lastModified = System.currentTimeMillis();
 	private static Set<ClassMatchVisitorFactory> classMatchFactories = new HashSet<>();
+	private static final String configFileName = "downstream-disable.json";
 
 	static {
-		String configFileName = "downstream-disable.json"; // Updated file name
+		
 		File agentDir = ConfigFileHelper.getNewRelicDirectory();
 		configFile = new File(agentDir, configFileName);
 	}
@@ -57,6 +56,11 @@ public class DisableConfigListener implements Runnable {
 
 	@Override
 	public void run() {
+		// initialize configFile if it is added after startup
+		if(configFile == null) {
+			File agentDir = ConfigFileHelper.getNewRelicDirectory();
+			configFile = new File(agentDir, configFileName);
+		}
 		if (configFile != null && configFile.lastModified() > lastModified) {
 			NewRelic.getAgent().getLogger().log(Level.FINE, "The file {0} has been modified, will reprocess classes", configFile);
 			try {
@@ -84,34 +88,31 @@ public class DisableConfigListener implements Runnable {
 	protected static void process(JSONObject json) {
 		if (json != null) {
 			JSONArray jArray = (JSONArray) json.get("toDisable");
-			DisableMethodMatcher methodMatcher = DisableMethodMatcher.getInstance();
 
-			DisableClassMatcher disableClassMatcher = DisableClassMatcher.getInstance();
 			List<String> existingClasses = new ArrayList<String>(TracerUtils.getCurrentTracedClasses()); //disableClassMatcher.getClassNames();
 			if(existingClasses != null) {
-
 				NewRelic.getAgent().getLogger().log(Level.FINE, "Existing classes being traced: {0}", existingClasses);
 			}
-			disableClassMatcher.clear(); // Clear existing class matchers
-
-			// clear classmatcher map
-			TracerUtils.resetMatcherMap();
+			
+			// get current set of ClassAndMethodMatchers
+			Set<ClassAndMethodMatcher> existing = new HashSet<>(TracerUtils.getClassMethodMatchers());
+			Map<String, ClassAndMethodMatcher> current = TracerUtils.getCurrentMap();
+			
+			TracerUtils.setupForReload();
 
 			classMatchFactories.clear(); // Clear existing class match visitor factories
-			if (!methodMatcher.isEmpty())
-				methodMatcher.clear();
+			
+			List<MatcherAddStatus> newMatchers = new ArrayList<>();
+			List<MatcherAddStatus> updatedMatchers = new ArrayList<>();
+			List<MatcherAddStatus> unchangedMatchers = new ArrayList<>();
 
 			if (jArray != null && !jArray.isEmpty()) {
 				for (Object obj : jArray) {
 					if (obj instanceof JSONObject) {
 						JSONObject classJson = (JSONObject) obj;
 						String className = (String) classJson.get(CLASSNAME);
-						existingClasses.remove(className);
 						TraceType type = TraceType.EXACTCLASS;
 						if (className != null && !className.isEmpty()) {
-							//							ChildClassMatcher childClassMatcher = null;
-							//							InterfaceMatcher interfaceMatcher = null;
-							//							ExactClassMatcher exactClassMatcher = null;
 							ClassMatcher classMatcher = null;
 							String classType = (String) classJson.get(CLASSTYPE);
 							if (classType != null && !classType.isEmpty()) {
@@ -134,29 +135,6 @@ public class DisableConfigListener implements Runnable {
 								classMatcher = new ExactClassMatcher(className);
 								break;
 							}
-							//							if (exactClassMatcher != null) {
-							//								matchers.add(exactClassMatcher);
-							//								TracerUtils.addClassMatcher(className, exactClassMatcher);
-							//							}
-							//							if (interfaceMatcher != null) {
-							//								matchers.add(interfaceMatcher);
-							//								TracerUtils.addClassMatcher(className, interfaceMatcher);
-							//							}
-							//							if (childClassMatcher != null) {
-							//								matchers.add(childClassMatcher);
-							//								TracerUtils.addClassMatcher(className, childClassMatcher);
-							//							}
-							TracerUtils.addClassMatcher(className,classMatcher);
-							if (!existingClasses.isEmpty() && classMatcher != null) {
-								if(existingClasses.contains(className)) {
-									boolean removed = existingClasses.remove(className);
-									if (removed) {
-										NewRelic.getAgent().getLogger().log(Level.FINE, "Removed class {0} from list of existing, currentExisting: {1}", className, existingClasses);
-									} else {
-										NewRelic.getAgent().getLogger().log(Level.FINE, "Failed to removed class {0} from list of existing, currentExisting: {1}", className, existingClasses);
-									} 
-								}
-							}
 							JSONArray methodArray = (JSONArray) classJson.get("methods");
 							Set<MethodMatcher> methodMatchers = new HashSet<>();
 							if (methodArray != null && !methodArray.isEmpty()) {
@@ -173,7 +151,6 @@ public class DisableConfigListener implements Runnable {
 											for (int i = 0; i < argsArray.size(); i++)
 												args[i] = argsArray.get(i).toString();
 											String desc = TracerUtils.getMethodDescriptor(returnType, args);
-											methodMatcher.addMethod(methodName, desc);
 											methodDesc = desc;
 										}
 										
@@ -194,57 +171,74 @@ public class DisableConfigListener implements Runnable {
 										ClassMethodSignature sig = new ClassMethodSignature(className, methodName, methodDesc);
 										config.setSig(sig);
 										NewRelic.getAgent().getLogger().log(Level.FINE, "Adding ClassMethodConfig: {0}",config);
-										//										TracerUtils.addTracerConfig(config);
+										TracerUtils.addTracerConfig(config);
 									}
 								}
 							}
 							if(!methodMatchers.isEmpty()) {
 								MethodMatcher multiMethodMatcher = OrMethodMatcher.getMethodMatcher(methodMatchers);
 								ConfiguredClassMethodMatcher classMethod = new ConfiguredClassMethodMatcher(classMatcher, multiMethodMatcher);
-								TracerUtils.addClassMethodMatcher(className,classMethod);
+								MatcherAddStatus matcherStatus = TracerUtils.addClassMethodMatcher(className,classMethod);
+								STATUS status = matcherStatus.getStatus();
+								if(status == STATUS.NEW) {
+									newMatchers.add(matcherStatus);
+								} else if(status == STATUS.UPDATED) {
+									updatedMatchers.add(matcherStatus);
+								} else {
+									unchangedMatchers.add(matcherStatus);
+								}
+								if(existing.contains(classMethod)) {
+									boolean b = existing.remove(classMethod);
+									if(!b) {
+										NewRelic.getAgent().getLogger().log(Level.FINE, "Failed to remove existing ClassAndMethodMatcher {0} from the list of existing: {1}", classMethod, existing);
+									}
+								}
+
 							}
 						}
 					}
 				}
 			}
 
-			Collection<ConfiguredClassMethodMatcher> configured = TracerUtils.getClassMethodMatchers();
-			NewRelic.getAgent().getLogger().log(Level.FINE, "The set of Configured Matchers is {0}", configured);
-			if(!configured.isEmpty()) {
+			if(!newMatchers.isEmpty() || !updatedMatchers.isEmpty() || !unchangedMatchers.isEmpty()) {
 				DisableTransformer transformer = TracerUtils.getTransformer();
-
 				transformer.resetMatchers();
 				
-				for(ClassAndMethodMatcher matcher : TracerUtils.getClassMethodMatchers()) {
+				for(MatcherAddStatus matcherStatus : newMatchers) {
+					ClassAndMethodMatcher matcher = matcherStatus.getNew_matcher();
 					ClassMatchVisitorFactory matchVisitor = transformer.addMatcher(matcher);
+					classMatchFactories.add(matchVisitor);
+				}
+				
+				for(MatcherAddStatus matcherStatus : updatedMatchers) {
+//					ClassAndMethodMatcher old_matcher = matcherStatus.getOld_matcher();
+					ClassAndMethodMatcher new_matcher = matcherStatus.getNew_matcher();
+					
+//					transformer.removeMatcher(old_matcher);
+					
+					ClassMatchVisitorFactory matchVisitor = transformer.addMatcher(new_matcher);
+					classMatchFactories.add(matchVisitor);
+				}
+		
+				for(MatcherAddStatus matcherStatus : unchangedMatchers) {
+//					ClassAndMethodMatcher old_matcher = matcherStatus.getOld_matcher();
+					ClassAndMethodMatcher new_matcher = matcherStatus.getNew_matcher();
+					
+//					transformer.removeMatcher(old_matcher);
+					
+					ClassMatchVisitorFactory matchVisitor = transformer.addMatcher(new_matcher);
 					classMatchFactories.add(matchVisitor);
 				}
 		
 
-				if(!existingClasses.isEmpty()) {
-					NewRelic.getAgent().getLogger().log(Level.FINE, "There are existing classses that are no longer being traced: {0}", existingClasses);
-					TracerUtils.setRemoved(existingClasses);
-					for(String classname : existingClasses) {
-						ConfiguredClassMethodMatcher removedMatcher = TracerUtils.getConfiguredMatcher(classname);
-						ClassMatchVisitorFactory matchVisitor = transformer.addMatcher(removedMatcher);
-						
-						classMatchFactories.add(matchVisitor);
-					}
-					
+				if(!existing.isEmpty()) {
+					NewRelic.getAgent().getLogger().log(Level.FINE, "There are existing ClassAndMethodMatchers that are no longer being traced: {0}", existing);
+					TracerUtils.setRemoved(current, existing);					
 				}
 
 
 			}
 
-			//			if (!matchers.isEmpty()) {
-			//				// DisableClassMatcher disableClassMatcher = DisableClassMatcher.getInstance();
-			//				disableClassMatcher.clear();
-			//				disableClassMatcher.addAllMatchers(matchers);
-			//
-			//				OptimizedClassMatcherBuilder builder = OptimizedClassMatcherBuilder.newBuilder();
-			//				builder.addClassMethodMatcher(new DisableClassAndMethodMatcher(disableClassMatcher, methodMatcher));
-			//				classMatchFactories.add(builder.build());
-			//			}
 		}
 	}
 

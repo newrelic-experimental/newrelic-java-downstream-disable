@@ -24,4 +24,27 @@ public class ConfiguredClassMethodMatcher implements ClassAndMethodMatcher {
 		return methodMatcher;
 	}
 
+	@Override
+	public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        ConfiguredClassMethodMatcher other = (ConfiguredClassMethodMatcher)obj;
+        return classMatcher.equals(other.classMatcher) && methodMatcher.equals(other.methodMatcher);
+	}
+
+	@Override
+	public String toString() {
+		return "ConfiguredClassMethodMatcher" + "@" + hashCode();
+	}
+	
+	
+	
+
 }
