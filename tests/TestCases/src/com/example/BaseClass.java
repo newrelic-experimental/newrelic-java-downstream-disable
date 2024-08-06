@@ -9,7 +9,7 @@ import com.newrelic.api.agent.Trace;
 
 public class BaseClass extends AbstractBaseClass {
 	@Override
-	public void makeExternalCall() {
+	public void makeExternalCall_AA() {
 
 		try {
 			// Delay of 1 seconds
@@ -46,6 +46,6 @@ public class BaseClass extends AbstractBaseClass {
 
 	public static void main(String[] args) {
 		BaseClass baseClass = new BaseClass();
-		baseClass.makeExternalCall();
+		baseClass.makeExternalCall_AA();
 	}
 }

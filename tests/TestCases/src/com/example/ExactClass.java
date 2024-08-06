@@ -9,7 +9,7 @@ import com.newrelic.api.agent.Trace;
 
 public class ExactClass {
 
-	public void makeExternalCall() {
+	public void makeExternalCall_EE() {
 
 		try {
 			// Delay of 1 seconds
@@ -46,6 +46,6 @@ public class ExactClass {
 
 	public static void main(String[] args) {
 		ExactClass exactClass = new ExactClass();
-		exactClass.makeExternalCall();
+		exactClass.makeExternalCall_EE();
 	}
 }
