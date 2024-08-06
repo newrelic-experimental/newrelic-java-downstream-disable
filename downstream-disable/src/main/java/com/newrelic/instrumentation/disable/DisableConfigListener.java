@@ -146,6 +146,7 @@ public class DisableConfigListener implements Runnable {
 							//								matchers.add(childClassMatcher);
 							//								TracerUtils.addClassMatcher(className, childClassMatcher);
 							//							}
+							TracerUtils.addClassMatcher(className,classMatcher);
 							if (!existingClasses.isEmpty() && classMatcher != null) {
 								if(existingClasses.contains(className)) {
 									boolean removed = existingClasses.remove(className);

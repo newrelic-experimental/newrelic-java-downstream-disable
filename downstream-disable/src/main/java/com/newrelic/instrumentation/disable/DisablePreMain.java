@@ -37,19 +37,20 @@ public class DisablePreMain {
 		ClassTransformerService classTransformerService = ServiceFactory.getClassTransformerService();
 		CoreService coreService = ServiceFactory.getCoreService();
 		if (classTransformerService != null && coreService != null && tracerService != null) {
-			try {
-				DisableConfigListener.initialize();
-			} catch (IOException e) {
-				NewRelic.getAgent().getLogger().log(Level.FINE, e, "IOException while processing Disable Config");
-			} catch (ParseException e) {
-				NewRelic.getAgent().getLogger().log(Level.FINE, e, "Failed to parse Disable Config");
-			}
 			tracerService.registerTracerFactory("DisablePreMain", new DisableTracerFactory());
 			Set<ClassMatchVisitorFactory> classMatchers = new HashSet<>();
 			InstrumentationContextManager contextMgr = classTransformerService.getContextManager();
 			InstrumentationProxy proxy = coreService.getInstrumentation();
 			if (contextMgr != null && proxy != null) {
 				DisableTransformer transformer = new DisableTransformer(contextMgr, proxy);
+				TracerUtils.setTransformer(transformer);
+				try {
+					DisableConfigListener.initialize();
+				} catch (IOException e) {
+					NewRelic.getAgent().getLogger().log(Level.FINE, e, "IOException while processing Disable Config");
+				} catch (ParseException e) {
+					NewRelic.getAgent().getLogger().log(Level.FINE, e, "Failed to parse Disable Config");
+				}
 				for(ClassAndMethodMatcher matcher : TracerUtils.getClassMethodMatchers()) {
 					ClassMatchVisitorFactory matchVisitor = transformer.addMatcher(matcher);
 					classMatchers.add(matchVisitor);
@@ -59,7 +60,6 @@ public class DisablePreMain {
 						.getAllLoadedClasses();
 				ServiceFactory.getClassTransformerService().retransformMatchingClassesImmediately(allLoadedClasses,
 						classMatchers);
-				TracerUtils.setTransformer(transformer);
 				return true;
 			}
 		}
