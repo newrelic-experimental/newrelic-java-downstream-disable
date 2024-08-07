@@ -10,7 +10,7 @@ import com.newrelic.api.agent.Trace;
 public class InterfaceClass implements ExternalCallInterface {
 	@Override
 
-	public void makeExternalCall() {
+	public void makeExternalCall_II() {
 
 		try {
 			// Delay of 1 seconds
@@ -47,6 +47,6 @@ public class InterfaceClass implements ExternalCallInterface {
 
 	public static void main(String[] args) {
 		InterfaceClass interfaceClass = new InterfaceClass();
-		interfaceClass.makeExternalCall();
+		interfaceClass.makeExternalCall_II();
 	}
 }

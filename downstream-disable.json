@@ -1,3 +1,4 @@
+
 {
   "toDisable": [
     {
@@ -5,7 +6,7 @@
       "classType": "exactclass",
       "methods": [
         {
-          "methodName": "makeExternalCall",
+          "methodName": "makeExternalCall_EE",
           "returnType": "void",
           "args": []
         }
@@ -16,7 +17,7 @@
       "classType": "interface",
       "methods": [
         {
-          "methodName": "makeExternalCall",
+          "methodName": "makeExternalCall_II",
           "returnType": "void",
           "args": []
         }
@@ -27,7 +28,7 @@
       "classType": "baseclass",
       "methods": [
         {
-          "methodName": "makeExternalCall",
+          "methodName": "makeExternalCall_AA",
           "returnType": "void",
           "args": []
         }
