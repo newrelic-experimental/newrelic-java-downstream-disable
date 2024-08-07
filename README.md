@@ -21,6 +21,11 @@
 
 The New Relic Java Agent Instrumentation for downstream trace disabling allows users to dynamically configure and disable specific method traces based on a JSON configuration file. This instrumentation reads the configuration file, processes the specified classes and methods, and applies the necessary transformations to disable tracing for the configured methods.
 
+## Purpose   
+The purpose of this extension is to allow you to disable downstream tracing of methods that may be impacting the amount of data collected and/or causing higher than normal CPU and memory usage.  Entering a method in the configuration will cause the Java Agent to track the configured method and turn off everything that is instrumented and called during the execution of that method.    
+The typical scenerio would be a method that initiate a large number of very fast database calls, external calls or calls to a cache.    
+Note that this turns of tracing of ever instrumented method not just the DB or external calls.   
+   
 ## Key Components
 
 1. **DisableConfigListener**: Listens for changes to the configuration file and processes the new configuration.
