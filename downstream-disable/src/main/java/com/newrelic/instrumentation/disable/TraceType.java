@@ -1,4 +1,4 @@
-package com.newrelic.instrumentation.kronos;
+package com.newrelic.instrumentation.disable;
 
 enum TraceType {
   INTERFACE, BASECLASS, EXACTCLASS;

@@ -1,0 +1,37 @@
+{
+  "toDisable": [
+    {
+      "classname": "com.example.ExactClass",
+      "classType": "exactclass",
+      "methods": [
+        {
+          "methodName": "makeExternalCall",
+          "returnType": "void",
+          "args": []
+        }
+      ]
+    },
+    {
+      "classname": "com.example.ExternalCallInterface",
+      "classType": "interface",
+      "methods": [
+        {
+          "methodName": "makeExternalCall",
+          "returnType": "void",
+          "args": []
+        }
+      ]
+    },
+    {
+      "classname": "com.example.AbstractBaseClass",
+      "classType": "baseclass",
+      "methods": [
+        {
+          "methodName": "makeExternalCall",
+          "returnType": "void",
+          "args": []
+        }
+      ]
+    }
+  ]
+}

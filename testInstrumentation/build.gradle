@@ -1,4 +1,5 @@
-// Build.gradle generated for instrumentation module downstream-disable
+
+// Build.gradle generated for instrumentation module testInstrumentation
 
 apply plugin: 'java'
 
@@ -8,21 +9,18 @@ dependencies {
    // implementation 'javax.servlet:servlet-api:2.5'
 
    // New Relic Java Agent dependencies
-   implementation 'com.newrelic.agent.java:newrelic-agent:6.4.1'
-   implementation 'com.newrelic.agent.java:newrelic-api:6.4.1'
+   implementation 'com.newrelic.agent.java:newrelic-agent:6.4.0'
+   implementation 'com.newrelic.agent.java:newrelic-api:6.4.0'
    implementation fileTree(include: ['*.jar'], dir: '../libs')
    implementation fileTree(include: ['*.jar'], dir: '../test-lib')
 }
 
 jar {
   manifest {
-    attributes(
-      'Implementation-Title': 'com.newrelic.instrumentation.labs.downstream-disable',
-      'Implementation-Vendor': 'New Relic Labs',
-      'Implementation-Vendor-Id': 'com.newrelic.labs',
-      'Implementation-Version': 1.0,
-      'Agent-Class': 'com.newrelic.instrumentation.disable.DisablePreMain'
-    )
+    attributes 'Implementation-Title': 'com.newrelic.instrumentation.labs.testInstrumentation'
+    attributes 'Implementation-Vendor': 'New Relic Labs'
+    attributes 'Implementation-Vendor-Id': 'com.newrelic.labs'
+    attributes 'Implementation-Version': 1.0
   }
 }
 

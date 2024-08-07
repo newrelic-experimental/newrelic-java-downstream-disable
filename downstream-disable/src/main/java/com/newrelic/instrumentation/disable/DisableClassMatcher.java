@@ -1,4 +1,4 @@
-package com.newrelic.instrumentation.kronos;
+package com.newrelic.instrumentation.disable;
 
 import com.newrelic.agent.deps.org.objectweb.asm.ClassReader;
 import com.newrelic.agent.instrumentation.classmatchers.ClassMatcher;
@@ -6,12 +6,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class KronosClassMatcher extends ClassMatcher {
-  private static KronosClassMatcher INSTANCE = null;
+public class DisableClassMatcher extends ClassMatcher {
+  private static DisableClassMatcher INSTANCE = null;
   
-  public static KronosClassMatcher getInstance() {
+  public static DisableClassMatcher getInstance() {
     if (INSTANCE == null)
-      INSTANCE = new KronosClassMatcher(); 
+      INSTANCE = new DisableClassMatcher(); 
     return INSTANCE;
   }
   
