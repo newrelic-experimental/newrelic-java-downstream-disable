@@ -65,6 +65,13 @@ The JSON configuration file (`downstream-disable.json`) specifies the classes an
   ]
 }
 ```
+---
+
+**Please Note**:
+
+- To remove existing configurations from `downstream-disable.json`, you must restart the application. However, adding new configurations does not require a restart.
+- Ensure the method you configure for downstream disabling is not already being traced.
+---
 
 ### Initialization and Configuration Processing
 
